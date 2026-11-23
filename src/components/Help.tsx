@@ -32,7 +32,8 @@ export function Help({ onClose }: { onClose: () => void }) {
             (Nero or QuickTime), or ID3 chapters in MP3. Without any, the file still plays and shows “No chapters”.
           </li>
           <li>
-            <b>Captions:</b> a <code>name.captions.vtt</code> file shows as a transcript line for audio, or as captions on video.
+            <b>Captions:</b> a <code>name.captions.vtt</code> file shows as a transcript line for audio, or as captions on video. Subtitles embedded in an
+            MP4 are shown on iPhone when there is no .vtt file; if there is one, only the .vtt is shown (never both).
           </li>
         </ul>
       </section>
@@ -90,7 +91,8 @@ export function Help({ onClose }: { onClose: () => void }) {
             offline: open them in Safari while online, copy the final <code>google.com/cardboard/cfg?p=…</code> address and paste it.
           </li>
           <li>
-            <b>Choose your phone model</b> so the lens maths knows the real screen size, or calibrate with a bank card.
+            <b>Check the phone model</b> (iPhone 13 Pro is chosen by default) so the lens maths knows the real screen size, or calibrate
+            with a bank card.
           </li>
           <li>
             <b>Fine-tune</b> while wearing the viewer: use the test pattern and adjust lens spacing, vertical offset, distortion and screen
@@ -100,6 +102,13 @@ export function Help({ onClose }: { onClose: () => void }) {
             In the player, tap the headset icon. Turn the phone to landscape and put it in the viewer. Tap the screen (or press the viewer
             button) to show the controls; look at a button for 1.5 s or tap while looking at it. AirPods and lock-screen buttons keep
             working.
+          </li>
+          <li>
+            <b>VR Box / Bluetooth remote:</b> in game-controller mode, the stick moves between buttons (or changes chapter when the
+            controls are hidden), the trigger/A shows the controls and presses the highlighted button, B hides them, X/Y play or pause,
+            the shoulder buttons change chapter, Start shows or hides the controls and Select recenters. In iOS / music mode the remote's
+            play and next/previous buttons work like AirPods (play/pause and chapters). Volume buttons only change the volume. Safari on iPhone
+            may not see a cheap remote in game mode: if nothing reacts, switch the remote to its iOS / music mode.
           </li>
         </ol>
       </section>

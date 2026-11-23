@@ -11,6 +11,7 @@
 - 2026-11-23 — VR core: viewer-profile protobuf decoder/encoder, QR import/export, iPhone screen table, distortion maths + tests.
 - 2026-11-23 — VR runtime: WebGL2 stereo renderer, head tracking, gaze/tap HUD, test pattern with live fine-tune, viewer settings UI.
 - 2026-11-23 — GitHub Pages workflow, README, CLAUDE.md, iPhone checklist; base path `/vid-app/`; deployed.
+- 2026-11-23 — Captions shown once (sidecar or embedded MP4 track, never both); VR Box / Bluetooth remote support in VR; iPhone 13 Pro default phone.
 - 2026-11-23 — Remotes split: `origin` = Video-control, `pages` = vid-app; deploy workflow only runs in vid-app.
 
 ## Pending tasks
@@ -28,6 +29,8 @@
 - [ ] iPhone: background audio with screen locked; lock-screen ⏮/⏭ = chapters; AirPods.
 - [ ] iPhone: Keep in app backend (OPFS on Safari 26+, worker fallback before) and reopen after the app is killed.
 - [ ] iPhone: VR — camera QR scan, photo import, phone model, test pattern through the lenses with glasses, head tracking + recenter, gaze dwell, 20+ min wake lock (needs iOS 18.4+ in standalone).
+- [ ] iPhone: MP4 with embedded subtitles + `.captions.vtt` shows each line once.
+- [ ] VR Box remote on iPhone (game mode vs iOS/music mode) and on Windows.
 - [ ] VR frame rate on iPhone 13 Pro (target 60 fps).
 
 ## Pending decisions

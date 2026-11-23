@@ -11,6 +11,7 @@ Run on the iPhone after each deploy. Use files from Kokoromake (an `.m4b` with i
 ## Playback
 
 - [ ] **Open file(s)** → in the Files picker select the `.m4b` **and** its `.chapters.vtt` and `.captions.vtt` together. (If .vtt files are greyed out, use "Pick any file type".)
+- [ ] Open an `.mp4` that has embedded subtitles together with its `.captions.vtt`: each caption line appears **once**. Open the same `.mp4` alone: the embedded subtitles show, and the captions button toggles them.
 - [ ] It plays; the cover shows the title and current chapter; the caption line updates under it; captions button toggles it.
 - [ ] Chapters button → bottom sheet lists every chapter with start time and length, current one highlighted. Tap a chapter: it plays from its start. "Chapter X of Y" updates.
 - [ ] Previous chapter: more than 3 s in → back to the chapter start; within the first 3 s → previous chapter.
@@ -40,7 +41,7 @@ Run on the iPhone after each deploy. Use files from Kokoromake (an `.m4b` with i
 
 - [ ] Home → headset icon (VR viewer settings) → **Scan with camera**: allow the camera, point at the viewer's QR code: the viewer is imported and its values are shown (vendor, model, distances, distortion).
 - [ ] Take a photo of the QR (or a screenshot of it) → **From photo**: imports the same values.
-- [ ] Phone model: pick yours (the matching models are marked "matches this device"). Optionally try the bank-card calibration.
+- [ ] Phone model: iPhone 13 Pro is preselected; it should be marked "matches this device". Optionally try the bank-card calibration.
 - [ ] **Test pattern in the viewer** → Start → put the phone in the viewer **with glasses on**: grid lines look straight; all four coloured edges (red, green, yellow, blue) are visible. Tap → controls; use Less / More / Next setting to adjust lens spacing, vertical offset, distortion, screen size until it looks right. "Done" exits.
 - [ ] In the player: headset icon → Start (allow motion access) → landscape → viewer. The video (or cover for audio) floats on a screen in a dark room.
 - [ ] Head tracking: turn your head, the screen stays in place. Tap → controls → look at **Recenter** for 1.5 s: the screen moves straight ahead.
@@ -48,4 +49,5 @@ Run on the iPhone after each deploy. Use files from Kokoromake (an `.m4b` with i
 - [ ] Turn head tracking off in the VR start screen: taps cycle the highlighted button, a long press activates it.
 - [ ] AirPods next/previous and lock-screen controls change chapter while in VR.
 - [ ] Leave it playing in VR for **20+ minutes**: the screen never dims or locks.
+- [ ] VR Box remote, game mode: stick moves the highlight, trigger shows the controls / presses, B hides them, shoulder buttons change chapter. If nothing reacts, switch the remote to iOS / music mode: play/pause and next/previous chapter should work.
 - [ ] **Exit VR**: back in the normal player at the same position; close and reopen the file: it resumes from where VR left off.

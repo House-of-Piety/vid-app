@@ -16,7 +16,7 @@ Live: <https://house-of-piety.github.io/vid-app/>
 - Lock screen / headphone controls (Media Session): play/pause, ±10/30 s, previous/next **chapter**.
 - Library: "Open folder" on PC (remembered between launches), "Open file(s)" everywhere, drag and drop.
 - "Keep in app": copy a file and its .vtt files into app storage so it reopens with one tap, even offline on iPhone.
-- VR mode: stereo virtual screen with lens-distortion correction that uses the same viewer profile as the Google Cardboard app (scan the viewer's QR code), head tracking, in-VR controls, test pattern and fine-tuning.
+- VR mode: stereo virtual screen with lens-distortion correction that uses the same viewer profile as the Google Cardboard app (scan the viewer's QR code), head tracking, in-VR controls (gaze, tap, or a VR Box / Bluetooth game-controller remote), test pattern and fine-tuning. The phone model defaults to iPhone 13 Pro.
 
 ## Supported formats
 
