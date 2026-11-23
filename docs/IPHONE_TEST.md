@@ -11,10 +11,11 @@ Run on the iPhone after each deploy. Use files from Kokoromake (an `.m4b` with i
 ## Playback
 
 - [ ] **Open file(s)** → in the Files picker select the `.m4b` **and** its `.chapters.vtt` and `.captions.vtt` together. (If .vtt files are greyed out, use "Pick any file type".)
-- [ ] Open an `.mp4` that has embedded subtitles together with its `.captions.vtt`: each caption line appears **once**. Open the same `.mp4` alone: the embedded subtitles show, and the captions button toggles them.
+- [ ] Open an `.mp4` that has embedded subtitles together with its `.captions.vtt`: each caption line appears **once**, centred near the bottom of the picture (above the controls while they're shown), also in fullscreen. Open the same `.mp4` alone: the embedded subtitles show, and the captions button toggles them.
 - [ ] It plays; the cover shows the title and current chapter; the caption line updates under it; captions button toggles it.
 - [ ] Chapters button → bottom sheet lists every chapter with start time and length, current one highlighted. Tap a chapter: it plays from its start. "Chapter X of Y" updates.
 - [ ] Previous chapter: more than 3 s in → back to the chapter start; within the first 3 s → previous chapter.
+- [ ] Speed button → the speed panel is fully on screen (full width above the controls).
 - [ ] Speed 1.5×, close the file, reopen: speed is still 1.5×.
 - [ ] Open the `.mp4`: video plays inline; double-tap the right third = +10 s, left third = −10 s; no page zoom on double-tap; fullscreen works.
 
