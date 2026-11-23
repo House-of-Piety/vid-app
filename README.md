@@ -55,11 +55,24 @@ npm run preview    # production build with the service worker: http://localhost:
 
 Regenerate test fixtures (needs ffmpeg on PATH): `npm run fixtures` and `npm run fixtures:qr`. Regenerate the icons: `npm run icons`.
 
-## Deploy
+## Repositories and deploy
 
-Pushing to `main` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml): install → test → build → publish `dist/` to GitHub Pages.
+The same `main` branch lives in two repositories:
 
-One-time setup (repo **Settings → Pages**): the repository must be public (free organisation plan), and **Source** must be **GitHub Actions**. The Vite `base` is `/vid-app/` (see [vite.config.ts](vite.config.ts)); change it if the repository is renamed.
+| Remote | Repository | Role |
+|---|---|---|
+| `origin` | [House-of-Piety/Video-control](https://github.com/House-of-Piety/Video-control) (private) | Development and handover docs. The deploy workflow is skipped here. |
+| `pages` | [House-of-Piety/vid-app](https://github.com/House-of-Piety/vid-app) (public) | Hosts the live site. |
+
+To publish, push `main` to the `pages` remote:
+
+```powershell
+git push pages main
+```
+
+That runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml) in vid-app: install → test → build → publish `dist/` to GitHub Pages. The workflow only runs when the repository is `House-of-Piety/vid-app`.
+
+Pages setup (already done): vid-app is public, **Settings → Pages → Source** is **GitHub Actions**, and the org allows Pages creation. The Vite `base` is `/vid-app/` (see [vite.config.ts](vite.config.ts)); change it if the deploy repository is renamed.
 
 ## Testing on iPhone
 

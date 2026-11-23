@@ -1,6 +1,30 @@
 # CLAUDE.md — Chapter Player
 
-Offline-first PWA (Vite + React + TypeScript strict, plain CSS) that plays local audio/video with chapters, resumes reliably, and has a Cardboard VR mode. The owner is referred to as "User" in docs. Hosted on GitHub Pages at https://house-of-piety.github.io/vid-app/ (repo `House-of-Piety/vid-app`).
+Offline-first PWA (Vite + React + TypeScript strict, plain CSS) that plays local audio/video with chapters, resumes reliably, and has a Cardboard VR mode. The owner is referred to as "User" in docs. Live at https://house-of-piety.github.io/vid-app/.
+
+Current state and next steps: [ACTIVE_CONTEXT.md](ACTIVE_CONTEXT.md). Handover: [HANDOVER.md](HANDOVER.md).
+
+## Repositories
+
+- `origin` = `House-of-Piety/Video-control` (private): development and handover docs. `git push` goes here. The deploy workflow is skipped in this repo (`if: github.repository == 'House-of-Piety/vid-app'`).
+- `pages` = `House-of-Piety/vid-app` (public): the live site. `git push pages main` deploys. **Ask User before pushing to `pages`** — it publishes publicly.
+- Pages is configured (source: GitHub Actions; the org's "allow Pages creation" setting is on).
+
+## User's standing rules (verbatim where quoted)
+
+- "In project docs (README.md, CLAUDE.md, etc.) refer to me as \"User\"."
+- "Make sure no personal information is saved on vid-app." — no real names, emails or local user paths in files, docs or commit messages. Commits use the GitHub no-reply address.
+- "Media never leaves the device and is never uploaded. Never commit media files" (test fixtures in `tests/fixtures/` are the exception).
+- "After the first visit the app must work with no internet at all. No backend, no accounts, no analytics, no CDN fonts/scripts."
+- "Do not use VLC's name, logo or traffic-cone icon; design an original icon."
+- "Commit after each step with a clear message."
+- "When something has to be decided and isn't covered here, pick the simplest option that works offline on both iPhone and Windows, and note it in CLAUDE.md."
+- Put all VR code in `src/vr/` with no dependencies on the rest of the app.
+
+## Environment notes
+
+- Windows PC; Node.js LTS installed with winget at `C:\Program Files\nodejs` (in Git Bash prepend it to `PATH` if `node` isn't found). ffmpeg is on PATH.
+- `.claude/launch.json` has `dev` (5173) and `preview` (4173) configs for the browser pane. A hidden browser pane pauses `requestAnimationFrame`, so VR shows nothing until the pane is visible.
 
 ## Commands
 
