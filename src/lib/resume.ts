@@ -3,6 +3,8 @@ export interface ResumeState {
   key: string;
   name: string;
   folder: string;
+  /** File size in bytes (used to find the file again in a library). */
+  size: number;
   position: number;
   duration: number;
   chapterIndex: number;

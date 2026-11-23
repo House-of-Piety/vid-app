@@ -13,3 +13,6 @@ coverage
 *.vtt
 !tests/fixtures/**
 .claude/settings.local.json
+
+# local manual-test media
+tmp-media/
