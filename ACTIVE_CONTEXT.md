@@ -2,8 +2,8 @@
 
 ## What's live
 
-- https://house-of-piety.github.io/vid-app/ — deployed from `House-of-Piety/vid-app` (commit `88d9ad9`, "Deploy under /vid-app/"). Loads, registers the service worker and precaches the app; the second load is served by the service worker.
-- `House-of-Piety/Video-control` (private) holds the same code plus the handover docs. It is ahead of vid-app: the captions fix, VR remote support and default phone are NOT live until `git push pages main` (ask User).
+- https://house-of-piety.github.io/vid-app/ — deployed from `House-of-Piety/vid-app` (commit `162201c`). Loads, registers the service worker and precaches the app; the second load is served by the service worker.
+- `House-of-Piety/Video-control` (private) holds the same code plus the handover docs. vid-app was redeployed at `162201c` (captions fix, VR remote, default phone). Video-control may be a docs-only commit ahead.
 
 ## Done and verified this session (desktop Chrome / browser pane)
 
