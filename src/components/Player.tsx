@@ -30,6 +30,22 @@ const clampRate = (r: number) => Math.round(Math.min(3, Math.max(0.5, r)) * 10) 
 
 type MediaEl = HTMLVideoElement;
 
+/** Reset a cue's geometry to the movie default (bottom line, centred, full width). */
+function centreCue(c: TextTrackCue) {
+  const v = c as VTTCue;
+  try {
+    if ('line' in v) {
+      v.snapToLines = true;
+      v.line = 'auto';
+      v.position = 'auto';
+      v.size = 100;
+      v.align = 'center';
+    }
+  } catch {
+    /* read-only cue implementation */
+  }
+}
+
 export function Player({ item, onClose }: Props) {
   const ios = useMemo(isIOS, []);
   const isVideo = item.kind === 'video';
@@ -46,6 +62,11 @@ export function Player({ item, onClose }: Props) {
   const [hasTextTrack, setHasTextTrack] = useState(false);
   const trackElRef = useRef<HTMLTrackElement>(null);
   const chosenTrackRef = useRef<TextTrack | null>(null);
+  const [videoCaption, setVideoCaption] = useState('');
+  const nativeFsRef = useRef(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const hiddenRef = useRef(false);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -287,30 +308,80 @@ export function Player({ item, onClose }: Props) {
 
   // ---------- captions ----------
   // A video can expose several text tracks: our sidecar <track> plus subtitle tracks embedded in the
-  // MP4 (Safari shows those). Only one may be showing, otherwise the same lines appear twice.
-  // Sidecar wins; otherwise the first embedded subtitles/captions track is used.
+  // MP4 (Safari shows those). Exactly one is used: the sidecar, else the first embedded one.
+  // The browser doesn't draw it (mode 'hidden'): its own placement follows the cue / tx3g box
+  // geometry and ended up off to the side on iPhone. We draw the line ourselves, centred near the
+  // bottom of the picture (see captionBox). Only in iOS native fullscreen, where nothing of the page
+  // is visible, the track is set to 'showing', with every cue's geometry reset to "centred, bottom".
   useEffect(() => {
     const el = mediaRef.current;
     if (!el || !isVideo) return;
+    let chosen: TextTrack | null = null;
+    const onCue = () => {
+      const t = chosen;
+      if (!t?.activeCues) return setVideoCaption('');
+      const list = Array.from(t.activeCues);
+      list.forEach(centreCue);
+      setVideoCaption(list.map((c) => cueText((c as VTTCue).text ?? '')).join('\n'));
+    };
     const apply = () => {
       const all = Array.from(el.textTracks).filter((t) => t.kind === 'subtitles' || t.kind === 'captions');
-      const chosen = trackElRef.current?.track ?? all[0] ?? null;
+      const next = trackElRef.current?.track ?? all[0] ?? null;
+      if (next !== chosen) {
+        chosen?.removeEventListener('cuechange', onCue);
+        next?.addEventListener('cuechange', onCue);
+        chosen = next;
+      }
       chosenTrackRef.current = chosen;
       for (const t of Array.from(el.textTracks)) {
-        t.mode = t === chosen ? (captionsOn ? 'showing' : 'hidden') : 'disabled';
+        t.mode = t === chosen ? (nativeFsRef.current && captionsOn ? 'showing' : 'hidden') : 'disabled';
       }
+      if (chosen?.cues) Array.from(chosen.cues).forEach(centreCue);
       setHasTextTrack(!!chosen);
+      onCue();
+    };
+    const onBeginFs = () => {
+      nativeFsRef.current = true;
+      apply();
+    };
+    const onEndFs = () => {
+      nativeFsRef.current = false;
+      apply();
     };
     apply();
     el.textTracks.addEventListener?.('addtrack', apply);
     el.textTracks.addEventListener?.('removetrack', apply);
     el.addEventListener('loadedmetadata', apply);
+    el.addEventListener('webkitbeginfullscreen', onBeginFs);
+    el.addEventListener('webkitendfullscreen', onEndFs);
     return () => {
+      chosen?.removeEventListener('cuechange', onCue);
       el.textTracks.removeEventListener?.('addtrack', apply);
       el.textTracks.removeEventListener?.('removetrack', apply);
       el.removeEventListener('loadedmetadata', apply);
+      el.removeEventListener('webkitbeginfullscreen', onBeginFs);
+      el.removeEventListener('webkitendfullscreen', onEndFs);
     };
   }, [captionsOn, captionsUrl, isVideo, url]);
+
+  // Where to draw the video caption: centred on the visible picture (object-fit: contain), a little
+  // above its bottom edge, and above the controls while they're shown. Font scales with the picture.
+  const [captionBox, setCaptionBox] = useState<{ left: number; width: number; bottom: number; font: number } | null>(null);
+  const layoutCaption = useCallback(() => {
+    const v = mediaRef.current;
+    if (!v || !isVideo) return;
+    const w = v.clientWidth;
+    const h = v.clientHeight;
+    if (!w || !h) return;
+    const aspect = v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9;
+    const pw = Math.min(w, h * aspect);
+    const ph = pw / aspect;
+    const below = (h - ph) / 2;
+    let bottom = below + ph * 0.06;
+    const ctrl = controlsRef.current;
+    if (!hiddenRef.current && ctrl) bottom = Math.max(bottom, ctrl.offsetHeight + 8);
+    setCaptionBox({ left: (w - pw) / 2 + pw * 0.05, width: pw * 0.9, bottom, font: Math.round(Math.min(34, Math.max(14, ph * 0.055))) });
+  }, [isVideo]);
 
   const activeCue = useMemo(() => {
     if (!cues.length) return '';
@@ -517,6 +588,24 @@ export function Player({ item, onClose }: Props) {
   const shownTime = scrub ?? time;
   const hue = hashHue(title);
   const hidden = isVideo && !controlsVisible;
+  hiddenRef.current = hidden;
+
+  useEffect(() => {
+    layoutCaption();
+    const stage = stageRef.current;
+    if (!stage || !isVideo) return;
+    const ro = new ResizeObserver(() => layoutCaption());
+    ro.observe(stage);
+    if (controlsRef.current) ro.observe(controlsRef.current);
+    const v = mediaRef.current;
+    v?.addEventListener('loadedmetadata', layoutCaption);
+    v?.addEventListener('resize', layoutCaption);
+    return () => {
+      ro.disconnect();
+      v?.removeEventListener('loadedmetadata', layoutCaption);
+      v?.removeEventListener('resize', layoutCaption);
+    };
+  }, [layoutCaption, isVideo, url, hidden]);
 
   return (
     <div
@@ -540,7 +629,7 @@ export function Player({ item, onClose }: Props) {
         </button>
       </header>
 
-      <div className="stage" onPointerUp={onStagePointerUp}>
+      <div className="stage" ref={stageRef} onPointerUp={onStagePointerUp}>
         {isVideo ? (
           <video
             ref={mediaRef}
@@ -625,6 +714,15 @@ export function Player({ item, onClose }: Props) {
             </div>
           </>
         )}
+        {isVideo && captionsOn && videoCaption && captionBox && (
+          <div
+            className="video-caption"
+            style={{ left: captionBox.left, width: captionBox.width, bottom: captionBox.bottom, fontSize: captionBox.font }}
+            aria-live="polite"
+          >
+            <span>{videoCaption}</span>
+          </div>
+        )}
         {tapFlash && (
           <div key={tapFlash.n} className={`tap-flash ${tapFlash.zone === 0 ? 'left' : 'right'}`} aria-hidden="true">
             {tapFlash.zone === 0 ? '−10 s' : '+10 s'}
@@ -661,7 +759,7 @@ export function Player({ item, onClose }: Props) {
         </div>
       )}
 
-      <div className="controls" onPointerDown={poke}>
+      <div className="controls" ref={controlsRef} onPointerDown={poke}>
         <div className="seek-row">
           <SeekBar current={time} duration={duration} chapters={chapters} onSeek={seekTo} onScrub={setScrub} />
         </div>
@@ -725,8 +823,11 @@ export function Player({ item, onClose }: Props) {
                   <button className="icon-btn" onClick={() => setSpeed(rate + 0.1)} aria-label="Faster">
                     +
                   </button>
-                  <button className="btn" onClick={() => setSpeed(1)}>
-                    1.0×
+                  <span className="speed-value" aria-hidden="true">
+                    {rate.toFixed(1)}×
+                  </span>
+                  <button className="btn" onClick={() => setSpeed(1)} aria-label="Normal speed">
+                    Reset
                   </button>
                 </div>
               )}

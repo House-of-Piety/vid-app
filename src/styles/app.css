@@ -278,6 +278,27 @@ kbd {
   cursor: none;
 }
 
+/* Video captions, drawn by the app: centred on the picture, near its bottom edge (like a movie). */
+.video-caption {
+  position: absolute;
+  z-index: 2;
+  text-align: center;
+  pointer-events: none;
+  line-height: 1.3;
+  white-space: pre-line;
+  transition: bottom 0.25s;
+}
+.video-caption span {
+  display: inline;
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.72);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
 .cover-wrap {
   display: flex;
   flex-direction: column;
@@ -325,6 +346,7 @@ kbd {
 }
 
 .controls {
+  position: relative;
   background: var(--bg-2);
   border-top: 1px solid var(--line);
   padding: 2px calc(8px + var(--safe-r)) calc(4px + var(--safe-b)) calc(8px + var(--safe-l));
@@ -391,6 +413,29 @@ kbd {
 }
 .speed-pop input {
   width: 160px;
+}
+.speed-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  min-width: 3.5em;
+  text-align: center;
+}
+/* Phones: the speed button wraps onto the second row, so a popover anchored to it ran off the
+   left edge. Anchor it to the whole controls bar instead, full width above it. */
+@media (max-width: 700px) {
+  .speed-wrap {
+    position: static;
+  }
+  .speed-pop {
+    left: calc(8px + var(--safe-l));
+    right: calc(8px + var(--safe-r));
+    bottom: calc(100% + 6px);
+  }
+  .speed-pop input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
 }
 .volume {
   display: flex;
