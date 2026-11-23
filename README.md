@@ -12,6 +12,7 @@ Live: <https://house-of-piety.github.io/vid-app/>
 
 - Chapters from a sidecar `name.chapters.vtt`, MP4/M4B Nero `chpl`, the QuickTime chapter track, or MP3 ID3 `CHAP` frames (in that order).
 - Resume: position, chapter, speed and volume saved every 5 s and on pause / seek / chapter change / app hide; reopening jumps back 3 s with a "Resumed at …" toast and a Start-over button. Continue list on the home screen.
+- Pinch to zoom the video (like YouTube on a phone): zoom in up to 5×, drag to look around, pinch back to fit; snaps to "fill the screen". Ctrl + wheel on PC.
 - Seek bar with chapter ticks and a time + chapter tooltip, chapters drawer (PC) / bottom sheet (iPhone), speed 0.5×–3× per file, captions.
 - Lock screen / headphone controls (Media Session): play/pause, ±10/30 s, previous/next **chapter**.
 - Library: "Open folder" on PC (remembered between launches), "Open file(s)" everywhere, drag and drop.

@@ -15,6 +15,7 @@ Run on the iPhone after each deploy. Use files from Kokoromake (an `.m4b` with i
 - [ ] It plays; the cover shows the title and current chapter; the caption line updates under it; captions button toggles it.
 - [ ] Chapters button → bottom sheet lists every chapter with start time and length, current one highlighted. Tap a chapter: it plays from its start. "Chapter X of Y" updates.
 - [ ] Previous chapter: more than 3 s in → back to the chapter start; within the first 3 s → previous chapter.
+- [ ] On the `.mp4`, pinch out: the video zooms in where your fingers are; one finger drags it around; pinching in returns to fit (snaps to "fill the screen" near it). The page itself never zooms, and a pinch doesn't pause. "Fit" pill resets. Works in portrait and landscape.
 - [ ] Speed button → the speed panel is fully on screen (full width above the controls).
 - [ ] Speed 1.5×, close the file, reopen: speed is still 1.5×.
 - [ ] Open the `.mp4`: video plays inline; double-tap the right third = +10 s, left third = −10 s; no page zoom on double-tap; fullscreen works.
