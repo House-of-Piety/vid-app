@@ -10,6 +10,7 @@ import { Icon } from './Icons';
 import { SeekBar } from './SeekBar';
 import { ChaptersPanel } from './ChaptersPanel';
 import { VRHost } from './VRHost';
+import { NO_ZOOM, clampZoom, panZoom, pinchZoom, snapZoom, visiblePicture, zoomBox, type Pt, type Zoom } from '../lib/zoom';
 
 interface Props {
   item: MediaItem;
@@ -67,6 +68,11 @@ export function Player({ item, onClose }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const hiddenRef = useRef(false);
+  // pinch zoom (video)
+  const [zoom, setZoomState] = useState<Zoom>(NO_ZOOM);
+  const zoomRef = useRef<Zoom>(NO_ZOOM);
+  const [zoomAnim, setZoomAnim] = useState(false);
+  const [zoomGesture, setZoomGesture] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -374,13 +380,18 @@ export function Player({ item, onClose }: Props) {
     const h = v.clientHeight;
     if (!w || !h) return;
     const aspect = v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9;
-    const pw = Math.min(w, h * aspect);
-    const ph = pw / aspect;
-    const below = (h - ph) / 2;
-    let bottom = below + ph * 0.06;
+    // the visible part of the picture (zoomed or not)
+    const vis = visiblePicture(zoomRef.current, zoomBox(w, h, aspect));
+    const below = h - (vis.top + vis.height);
+    let bottom = below + vis.height * 0.06;
     const ctrl = controlsRef.current;
     if (!hiddenRef.current && ctrl) bottom = Math.max(bottom, ctrl.offsetHeight + 8);
-    setCaptionBox({ left: (w - pw) / 2 + pw * 0.05, width: pw * 0.9, bottom, font: Math.round(Math.min(34, Math.max(14, ph * 0.055))) });
+    setCaptionBox({
+      left: vis.left + vis.width * 0.05,
+      width: vis.width * 0.9,
+      bottom,
+      font: Math.round(Math.min(34, Math.max(14, Math.min(vis.height, (vis.width * 9) / 16) * 0.055))),
+    });
   }, [isVideo]);
 
   const activeCue = useMemo(() => {
@@ -546,7 +557,7 @@ export function Player({ item, onClose }: Props) {
   const lastTap = useRef<{ t: number; zone: number }>({ t: 0, zone: -1 });
   const singleTapTimer = useRef<number>(0);
   const [tapFlash, setTapFlash] = useState<{ zone: number; n: number } | null>(null);
-  const onStagePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleStageTap = (e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button, .seek')) return;
     const r = e.currentTarget.getBoundingClientRect();
     const zone = Math.min(2, Math.floor(((e.clientX - r.left) / r.width) * 3));
@@ -571,6 +582,131 @@ export function Player({ item, onClose }: Props) {
       else poke();
     }, 280);
   };
+  // ---------- touch: pinch to zoom, drag to pan (video, like YouTube mobile) ----------
+  const setZoom = useCallback((z: Zoom, animate = false) => {
+    zoomRef.current = z;
+    setZoomAnim(animate);
+    setZoomState(z);
+  }, []);
+  const box = useCallback(() => {
+    const v = mediaRef.current as HTMLVideoElement | null;
+    const w = v?.clientWidth ?? 0;
+    const h = v?.clientHeight ?? 0;
+    const aspect = v && v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9;
+    return zoomBox(w, h, aspect);
+  }, []);
+  const pointers = useRef(new Map<number, Pt>());
+  const gesture = useRef<{ kind: 'pinch' | 'pan'; start: Zoom; m0: Pt; d0: number; moved: boolean } | null>(null);
+  const gestureUsed = useRef(false);
+  const toStage = (e: React.PointerEvent<HTMLDivElement>): Pt => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - r.left - r.width / 2, y: e.clientY - r.top - r.height / 2 };
+  };
+  const startGesture = () => {
+    const pts = Array.from(pointers.current.values());
+    if (pts.length >= 2) {
+      const [a, b] = pts;
+      gesture.current = {
+        kind: 'pinch',
+        start: zoomRef.current,
+        m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+        d0: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        moved: true,
+      };
+      gestureUsed.current = true;
+      setZoomGesture(true);
+    } else if (pts.length === 1 && zoomRef.current.s > 1.001) {
+      gesture.current = { kind: 'pan', start: zoomRef.current, m0: pts[0], d0: 1, moved: false };
+    } else gesture.current = null;
+  };
+  const onStagePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isVideo || e.pointerType === 'mouse' || (e.target as HTMLElement).closest('button, .seek')) return;
+    if (pointers.current.size === 0) gestureUsed.current = false;
+    pointers.current.set(e.pointerId, toStage(e));
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {
+      /* pointer already gone */
+    }
+    startGesture();
+  };
+  const onStagePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, toStage(e));
+    const g = gesture.current;
+    if (!g) return;
+    const pts = Array.from(pointers.current.values());
+    if (g.kind === 'pinch' && pts.length >= 2) {
+      const [a, b] = pts;
+      const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      setZoom(pinchZoom(g.start, g.m0, m, Math.hypot(a.x - b.x, a.y - b.y) / g.d0, box()));
+    } else if (g.kind === 'pan' && pts.length === 1) {
+      const dx = pts[0].x - g.m0.x;
+      const dy = pts[0].y - g.m0.y;
+      if (!g.moved && Math.hypot(dx, dy) < 8) return;
+      g.moved = true;
+      gestureUsed.current = true;
+      setZoom(panZoom(g.start, dx, dy, box()));
+    }
+  };
+  const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointers.current.delete(e.pointerId)) return false;
+    const wasPinch = gesture.current?.kind === 'pinch';
+    if (wasPinch && pointers.current.size < 2) {
+      setZoom(snapZoom(zoomRef.current, box()), true);
+      setZoomGesture(false);
+    }
+    startGesture(); // a remaining finger continues as a pan
+    return true;
+  };
+  const onStagePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const tracked = endPointer(e);
+    // a pinch or pan isn't a tap (no play/pause toggle, no double-tap skip)
+    if (tracked && (gestureUsed.current || pointers.current.size > 0)) return;
+    handleStageTap(e);
+  };
+  const resetZoom = useCallback(() => setZoom(NO_ZOOM, true), [setZoom]);
+
+  // new file -> fit; stage resized (rotation) -> keep the zoom inside the new bounds
+  useEffect(() => {
+    setZoom(NO_ZOOM);
+  }, [url, setZoom]);
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !isVideo) return;
+    const ro = new ResizeObserver(() => {
+      if (zoomRef.current.s > 1) setZoom(clampZoom(zoomRef.current, box()));
+    });
+    ro.observe(stage);
+    return () => ro.disconnect();
+  }, [isVideo, box, setZoom]);
+  useEffect(() => {
+    layoutCaption();
+  }, [zoom, layoutCaption]);
+
+  // iOS Safari: stop the page itself from pinch-zooming. Desktop: Ctrl + wheel / trackpad pinch zooms.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !isVideo) return;
+    const stop = (ev: Event) => ev.preventDefault();
+    const onWheel = (ev: WheelEvent) => {
+      if (!ev.ctrlKey) return;
+      ev.preventDefault();
+      const r = stage.getBoundingClientRect();
+      const m = { x: ev.clientX - r.left - r.width / 2, y: ev.clientY - r.top - r.height / 2 };
+      const z = pinchZoom(zoomRef.current, m, m, Math.exp(-ev.deltaY * 0.01), box());
+      setZoom(z.s < 1.02 ? NO_ZOOM : z);
+    };
+    stage.addEventListener('gesturestart', stop);
+    stage.addEventListener('gesturechange', stop);
+    stage.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      stage.removeEventListener('gesturestart', stop);
+      stage.removeEventListener('gesturechange', stop);
+      stage.removeEventListener('wheel', onWheel);
+    };
+  }, [isVideo, box, setZoom]);
+
   useEffect(() => {
     if (!tapFlash) return;
     const id = window.setTimeout(() => setTapFlash(null), 600);
@@ -629,11 +765,20 @@ export function Player({ item, onClose }: Props) {
         </button>
       </header>
 
-      <div className="stage" ref={stageRef} onPointerUp={onStagePointerUp}>
+      <div
+        className="stage"
+        ref={stageRef}
+        onPointerDown={onStagePointerDown}
+        onPointerMove={onStagePointerMove}
+        onPointerUp={onStagePointerUp}
+        onPointerCancel={endPointer}
+      >
         {isVideo ? (
           <video
             ref={mediaRef}
             src={url}
+            className={zoomAnim ? 'zoom-anim' : undefined}
+            style={zoom.s > 1 ? { transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.s})` } : undefined}
             playsInline
             preload="metadata"
             onLoadedMetadata={onLoadedMetadata}
@@ -722,6 +867,11 @@ export function Player({ item, onClose }: Props) {
           >
             <span>{videoCaption}</span>
           </div>
+        )}
+        {isVideo && zoom.s > 1.001 && (zoomGesture || !hidden) && (
+          <button className="zoom-pill" onClick={resetZoom} aria-label="Reset zoom">
+            {zoom.s.toFixed(1)}× · Fit
+          </button>
         )}
         {tapFlash && (
           <div key={tapFlash.n} className={`tap-flash ${tapFlash.zone === 0 ? 'left' : 'right'}`} aria-hidden="true">

@@ -79,7 +79,10 @@ export function Help({ onClose }: { onClose: () => void }) {
             <tr><td><kbd>Esc</kbd></td><td>Close panels</td></tr>
           </tbody>
         </table>
-        <p className="muted small">On iPhone: double-tap the left or right third of a video to skip 10 s.</p>
+        <p className="muted small">
+          On iPhone: double-tap the left or right third of a video to skip 10 s. Pinch a video to zoom in (drag with one finger to
+          look around, pinch in or tap “Fit” to go back). On PC: Ctrl + mouse wheel zooms.
+        </p>
       </section>
 
       <section>

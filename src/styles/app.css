@@ -252,6 +252,28 @@ kbd {
   height: 100%;
   object-fit: contain;
   background: #000;
+  transform-origin: 50% 50%;
+}
+.stage video.zoom-anim {
+  transition: transform 0.2s ease-out;
+}
+/* The video stage handles its own pinch / pan (the page must not zoom or scroll). */
+.is-video .stage {
+  touch-action: none;
+}
+.zoom-pill {
+  position: absolute;
+  top: calc(var(--bar-h) + var(--safe-t) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 .is-video .player-top,
 .is-video .controls {
