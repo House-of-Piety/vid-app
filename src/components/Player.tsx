@@ -43,6 +43,9 @@ export function Player({ item, onClose }: Props) {
   const [chapterSource, setChapterSource] = useState<ChapterSource>('none');
   const [cues, setCues] = useState<Cue[]>([]);
   const [captionsOn, setCaptionsOn] = useState(true);
+  const [hasTextTrack, setHasTextTrack] = useState(false);
+  const trackElRef = useRef<HTMLTrackElement>(null);
+  const chosenTrackRef = useRef<TextTrack | null>(null);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -283,16 +286,31 @@ export function Player({ item, onClose }: Props) {
   }, []);
 
   // ---------- captions ----------
+  // A video can expose several text tracks: our sidecar <track> plus subtitle tracks embedded in the
+  // MP4 (Safari shows those). Only one may be showing, otherwise the same lines appear twice.
+  // Sidecar wins; otherwise the first embedded subtitles/captions track is used.
   useEffect(() => {
     const el = mediaRef.current;
     if (!el || !isVideo) return;
     const apply = () => {
-      for (const t of Array.from(el.textTracks)) t.mode = captionsOn ? 'showing' : 'hidden';
+      const all = Array.from(el.textTracks).filter((t) => t.kind === 'subtitles' || t.kind === 'captions');
+      const chosen = trackElRef.current?.track ?? all[0] ?? null;
+      chosenTrackRef.current = chosen;
+      for (const t of Array.from(el.textTracks)) {
+        t.mode = t === chosen ? (captionsOn ? 'showing' : 'hidden') : 'disabled';
+      }
+      setHasTextTrack(!!chosen);
     };
     apply();
     el.textTracks.addEventListener?.('addtrack', apply);
-    return () => el.textTracks.removeEventListener?.('addtrack', apply);
-  }, [captionsOn, captionsUrl, isVideo]);
+    el.textTracks.addEventListener?.('removetrack', apply);
+    el.addEventListener('loadedmetadata', apply);
+    return () => {
+      el.textTracks.removeEventListener?.('addtrack', apply);
+      el.textTracks.removeEventListener?.('removetrack', apply);
+      el.removeEventListener('loadedmetadata', apply);
+    };
+  }, [captionsOn, captionsUrl, isVideo, url]);
 
   const activeCue = useMemo(() => {
     if (!cues.length) return '';
@@ -556,7 +574,7 @@ export function Player({ item, onClose }: Props) {
             onDurationChange={(e) => setDuration(e.currentTarget.duration)}
             onError={onMediaError}
           >
-            {captionsUrl && <track kind="captions" src={captionsUrl} srcLang="und" label="Captions" default />}
+            {captionsUrl && <track ref={trackElRef} kind="captions" src={captionsUrl} srcLang="und" label="Captions" />}
           </video>
         ) : (
           <>
@@ -729,7 +747,7 @@ export function Player({ item, onClose }: Props) {
                 />
               </div>
             )}
-            {cues.length > 0 && (
+            {(cues.length > 0 || hasTextTrack) && (
               <button
                 className={`icon-btn ${captionsOn ? 'on' : ''}`}
                 onClick={() => setCaptionsOn((c) => !c)}
@@ -779,11 +797,18 @@ export function Player({ item, onClose }: Props) {
             const d = el?.duration ?? 0;
             const i = chapterIndexAt(chaptersRef.current, t);
             const cue = cues.find((q) => q.start <= t && t < q.end);
+            let caption = cue ? cueText(cue.text) : '';
+            if (!cues.length && chosenTrackRef.current?.activeCues) {
+              // embedded subtitle track (no sidecar): read its active cues
+              caption = Array.from(chosenTrackRef.current.activeCues)
+                .map((c) => cueText((c as VTTCue).text ?? ''))
+                .join('\n');
+            }
             return {
               playing: !!el && !el.paused,
               progress: d > 0 ? t / d : 0,
               chapterTitle: chaptersRef.current[i]?.title ?? '',
-              caption: captionsOn && cue ? cueText(cue.text) : '',
+              caption: captionsOn ? caption : '',
             };
           }}
           actions={{ togglePlay, prevChapter, nextChapter }}
