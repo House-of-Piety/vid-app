@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "fixtures": "node scripts/make-fixtures.mjs",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "fixtures:qr": "node scripts/make-qr-fixtures.mjs"
   },
   "dependencies": {
     "jsqr": "^1.4.0",

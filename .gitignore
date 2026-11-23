@@ -16,3 +16,4 @@ coverage
 
 # local manual-test media
 tmp-media/
+*.tsbuildinfo
