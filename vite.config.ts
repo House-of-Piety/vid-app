@@ -5,8 +5,8 @@ import { readFileSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
-// GitHub Pages project site: https://house-of-piety.github.io/Video-control/
-const BASE = '/Video-control/';
+// GitHub Pages project site: https://house-of-piety.github.io/vid-app/
+const BASE = '/vid-app/';
 
 export default defineConfig({
   base: BASE,

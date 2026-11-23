@@ -6,7 +6,7 @@ An offline-first web app (PWA) that plays local audio and video files with chapt
 - After the first visit it works with **no internet at all**. No backend, no accounts, no analytics.
 - **Media never leaves the device.** Files are read locally; nothing is uploaded.
 
-Live: <https://house-of-piety.github.io/Video-control/>
+Live: <https://house-of-piety.github.io/vid-app/>
 
 ## Features
 
@@ -47,10 +47,10 @@ Needs Node.js 22+.
 
 ```powershell
 npm install
-npm run dev        # http://localhost:5173/Video-control/
+npm run dev        # http://localhost:5173/vid-app/
 npm test           # unit tests (Vitest)
 npm run build
-npm run preview    # production build with the service worker: http://localhost:4173/Video-control/
+npm run preview    # production build with the service worker: http://localhost:4173/vid-app/
 ```
 
 Regenerate test fixtures (needs ffmpeg on PATH): `npm run fixtures` and `npm run fixtures:qr`. Regenerate the icons: `npm run icons`.
@@ -59,7 +59,7 @@ Regenerate test fixtures (needs ffmpeg on PATH): `npm run fixtures` and `npm run
 
 Pushing to `main` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml): install → test → build → publish `dist/` to GitHub Pages.
 
-One-time setup (repo **Settings → Pages**): the repository must be public (free organisation plan), and **Source** must be **GitHub Actions**. The Vite `base` is `/Video-control/` (see [vite.config.ts](vite.config.ts)); change it if the repository is renamed.
+One-time setup (repo **Settings → Pages**): the repository must be public (free organisation plan), and **Source** must be **GitHub Actions**. The Vite `base` is `/vid-app/` (see [vite.config.ts](vite.config.ts)); change it if the repository is renamed.
 
 ## Testing on iPhone
 

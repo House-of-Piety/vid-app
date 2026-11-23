@@ -1,11 +1,11 @@
 # CLAUDE.md — Chapter Player
 
-Offline-first PWA (Vite + React + TypeScript strict, plain CSS) that plays local audio/video with chapters, resumes reliably, and has a Cardboard VR mode. The owner is referred to as "User" in docs. Hosted on GitHub Pages at `/Video-control/` (org `House-of-Piety`).
+Offline-first PWA (Vite + React + TypeScript strict, plain CSS) that plays local audio/video with chapters, resumes reliably, and has a Cardboard VR mode. The owner is referred to as "User" in docs. Hosted on GitHub Pages at https://house-of-piety.github.io/vid-app/ (repo `House-of-Piety/vid-app`).
 
 ## Commands
 
 ```powershell
-npm run dev          # Vite dev server, http://localhost:5173/Video-control/
+npm run dev          # Vite dev server, http://localhost:5173/vid-app/
 npm test             # Vitest (node environment), tests/*.test.ts
 npm run build        # tsc -b && vite build (+ service worker)
 npm run preview      # serve dist/ on :4173 — use this to test offline/SW behaviour
@@ -14,7 +14,7 @@ npm run fixtures:qr  # regenerate the viewer QR PNG fixtures
 npm run icons        # regenerate public/ icons from scripts/make-icons.mjs
 ```
 
-Manual testing in a browser: drop files onto the window (drag-and-drop), or put long local test media in `tmp-media/` (gitignored) — the dev server serves it at `/Video-control/tmp-media/…`. Append `?vrdebug` to the URL to keep the WebGL drawing buffer so screenshots of VR mode work.
+Manual testing in a browser: drop files onto the window (drag-and-drop), or put long local test media in `tmp-media/` (gitignored) — the dev server serves it at `/vid-app/tmp-media/…`. Append `?vrdebug` to the URL to keep the WebGL drawing buffer so screenshots of VR mode work.
 
 ## Architecture
 

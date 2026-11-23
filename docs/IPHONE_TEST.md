@@ -4,7 +4,7 @@ Run on the iPhone after each deploy. Use files from Kokoromake (an `.m4b` with i
 
 ## Install and offline
 
-- [ ] Open <https://house-of-piety.github.io/Video-control/> in Safari → Share → **Add to Home Screen**. Launch it from the home screen icon (no Safari bars visible).
+- [ ] Open <https://house-of-piety.github.io/vid-app/> in Safari → Share → **Add to Home Screen**. Launch it from the home screen icon (no Safari bars visible).
 - [ ] Close the app (swipe it away), turn on **Airplane mode**, launch it again: the home screen appears (cold start offline works).
 - [ ] Turn Airplane mode off again for the rest (or keep it on, everything below should still work).
 
