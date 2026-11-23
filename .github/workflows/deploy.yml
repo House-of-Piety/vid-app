@@ -16,6 +16,8 @@ concurrency:
 
 jobs:
   build:
+    # Only the public deploy repo (House-of-Piety/vid-app) publishes Pages; the dev repo skips this.
+    if: github.repository == 'House-of-Piety/vid-app'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
