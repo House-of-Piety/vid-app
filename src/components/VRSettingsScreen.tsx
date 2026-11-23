@@ -1,6 +1,6 @@
 import { Icon } from './Icons';
+import { VRSettings } from '../vr/ui/VRSettings';
 
-/** Placeholder until the VR step lands. */
 export function VRSettingsScreen({ onClose }: { onClose: () => void }) {
   return (
     <div className="page">
@@ -8,9 +8,9 @@ export function VRSettingsScreen({ onClose }: { onClose: () => void }) {
         <button className="icon-btn" onClick={onClose} aria-label="Back">
           <Icon name="back" />
         </button>
-        <h1>VR viewer</h1>
+        <h1>VR viewer settings</h1>
       </header>
-      <p className="muted">Coming soon.</p>
+      <VRSettings />
     </div>
   );
 }
