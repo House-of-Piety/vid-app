@@ -19,6 +19,7 @@ import { RadialDistortion } from '../src/vr/distortion';
 import { buildMesh, computeLayout, DEFAULT_TUNE, fitScreenWidth, lensCenterPx } from '../src/vr/lens';
 import { PHONE_IPHONE_13_PRO, PHONES, detectPhones } from '../src/vr/screens';
 import { decodeQrImageData } from '../src/vr/qr';
+import { GamepadInput, type PadSnapshot } from '../src/vr/gamepad';
 
 const VIEWMASTER_URL =
   'https://www.google.com/get/cardboard/download/?p=CgxNYXR0ZWwsIEluYy4SGFZJRVctTUFTVEVS4oSiIFZSIFZJRVdFUh0xCCw9JWiRbT0qEAAASEIAAEhCAABIQgAASEJYATUpXA89OggpXA8-SOE6P1AAYAM';
@@ -257,4 +258,52 @@ describe('QR image import', () => {
       expect(parseViewerInput(text!).kind).toBe('ok');
     });
   }
+});
+
+describe('VR remote / gamepad mapping', () => {
+  const pad = (over: Partial<PadSnapshot> = {}, pressed: number[] = []): PadSnapshot => ({
+    index: 0,
+    mapping: '',
+    axes: [0, 0],
+    buttons: Array.from({ length: 12 }, (_, i) => ({ pressed: pressed.includes(i) })),
+    ...over,
+  });
+
+  it('ignores what is already held when the pad first appears, then fires on press edges', () => {
+    const g = new GamepadInput();
+    expect(g.poll(0, [pad({}, [0])])).toEqual([]);
+    expect(g.poll(16, [pad({}, [0])])).toEqual([]);
+    expect(g.poll(32, [pad()])).toEqual([]);
+    expect(g.poll(48, [pad({}, [0])])).toEqual(['select']);
+    expect(g.poll(64, [pad({}, [1, 2, 5, 9])])).toEqual(['back', 'playPause', 'next', 'menu']);
+  });
+
+  it('stick directions fire once, with hysteresis, and left/right repeat while held', () => {
+    const g = new GamepadInput();
+    g.poll(0, [pad()]);
+    expect(g.poll(10, [pad({ axes: [0.9, 0.1] })])).toEqual(['right']);
+    expect(g.poll(100, [pad({ axes: [0.5, 0] })])).toEqual([]); // still above release threshold
+    expect(g.poll(500, [pad({ axes: [0.9, 0] })])).toEqual(['right']); // repeat after 450 ms
+    expect(g.poll(550, [pad({ axes: [0.9, 0] })])).toEqual([]);
+    expect(g.poll(600, [pad({ axes: [0.1, 0] })])).toEqual([]);
+    expect(g.poll(610, [pad({ axes: [0, -0.8] })])).toEqual(['up']);
+    expect(g.poll(2000, [pad({ axes: [0, -0.8] })])).toEqual([]); // up/down don't repeat
+  });
+
+  it('standard mapping: d-pad buttons are directions, not button actions', () => {
+    const g = new GamepadInput();
+    g.poll(0, [pad({ mapping: 'standard', buttons: Array.from({ length: 17 }, () => ({ pressed: false })) })]);
+    const b = Array.from({ length: 17 }, (_, i) => ({ pressed: i === 14 }));
+    expect(g.poll(10, [pad({ mapping: 'standard', buttons: b })])).toEqual(['left']);
+  });
+
+  it('reads a hat-switch axis and treats out-of-range as centred', () => {
+    const g = new GamepadInput();
+    const axes = (h: number) => [0, 0, 0, 0, 0, 0, 0, 0, 0, h];
+    g.poll(0, [pad({ axes: axes(3.2857) })]);
+    expect(g.poll(10, [pad({ axes: axes(-1) })])).toEqual(['up']);
+    expect(g.poll(20, [pad({ axes: axes(3.2857) })])).toEqual([]);
+    expect(g.poll(30, [pad({ axes: axes(5 / 7) })])).toEqual(['left']);
+    expect(g.poll(40, [pad({ axes: axes(-3 / 7) })])).toEqual(['right']);
+  });
 });

@@ -7,6 +7,7 @@ import type { DeviceParams } from './profile';
 import type { PhoneScreen } from './screens';
 import { deviceOrientationToQuat, quatAxisAngle, quatConj, quatFromEulerYXZ, quatMul, rotateVec, yawOf, type Quat } from './math';
 import { HUD_H, HUD_W, drawCursor, drawHud, hudButtonAt, type HudContent } from './hud';
+import { GamepadInput, type PadAction } from './gamepad';
 
 /**
  * What the HUD shows and does. Button ids 'recenter' and 'exit' are handled by the session itself;
@@ -37,6 +38,8 @@ export interface VRSessionOptions {
 const DWELL_MS = 1500;
 const LONG_PRESS_MS = 600;
 const HUD_AUTOHIDE_MS = 10000;
+/** After a remote / keyboard moves the highlight, gaze doesn't take it over for this long. */
+const MANUAL_NAV_MS = 4000;
 
 type MotionPermission = { requestPermission?: () => Promise<'granted' | 'denied'> };
 
@@ -111,6 +114,8 @@ export class VRSession {
   private lastHudKey = '';
   private dwell: { index: number; start: number; fired: boolean } = { index: -1, start: 0, fired: false };
   private gazeIndex = -1;
+  private pad = new GamepadInput();
+  private manualNavUntil = 0;
   // orientation
   private deviceQuat: Quat | null = null;
   private base: Quat = [0, 0, 0, 1];
@@ -313,6 +318,7 @@ export class VRSession {
   private frame() {
     if (this.canvas.style.visibility === 'hidden') return;
     const now = performance.now();
+    for (const a of this.pad.poll(now)) this.handleAction(a);
     const v = this.opts.source;
     if (v instanceof HTMLVideoElement && !('requestVideoFrameCallback' in (v as object)) && !v.paused) this.sourceDirty = true;
     if (this.sourceDirty && this.renderer.updateSource()) this.sourceDirty = false;
@@ -325,7 +331,7 @@ export class VRSession {
 
     // gaze + dwell
     let dwellProgress = 0;
-    this.gazeIndex = this.hudVisible && tracking ? this.gazeHit(head, hud) : -1;
+    this.gazeIndex = this.hudVisible && tracking && now >= this.manualNavUntil ? this.gazeHit(head, hud) : -1;
     if (this.gazeIndex >= 0) {
       if (this.dwell.index !== this.gazeIndex) this.dwell = { index: this.gazeIndex, start: now, fired: false };
       dwellProgress = Math.min(1, (now - this.dwell.start) / DWELL_MS);
@@ -420,42 +426,82 @@ export class VRSession {
     }
   };
 
-  private onKey = (e: KeyboardEvent) => {
-    let handled = true;
-    switch (e.key) {
-      case 'Escape':
-        this.opts.onExit();
+  /** Remote, gamepad and keyboard actions share one mapping. */
+  private handleAction(a: PadAction) {
+    const n = this.hudContent().buttons.length;
+    const move = (d: number) => {
+      this.hudHighlight = (this.hudHighlight + d + n) % n;
+      this.hudLastInteraction = performance.now();
+      this.manualNavUntil = performance.now() + MANUAL_NAV_MS;
+      this.dwell = { index: -1, start: 0, fired: false };
+      this.hudDirty = true;
+    };
+    switch (a) {
+      case 'left':
+        if (this.hudVisible) move(-1);
+        else this.opts.hud?.prev?.();
         break;
-      case 'h':
-      case 'H':
+      case 'right':
+        if (this.hudVisible) move(1);
+        else this.opts.hud?.next?.();
+        break;
+      case 'up':
+        if (!this.hudVisible) this.showHud(true);
+        break;
+      case 'down':
+      case 'back':
+        if (this.hudVisible) this.showHud(false);
+        break;
+      case 'select':
+        if (this.hudVisible) {
+          this.manualNavUntil = performance.now() + MANUAL_NAV_MS;
+          this.activate(this.hudHighlight);
+        } else this.showHud(true);
+        break;
+      case 'menu':
         this.showHud(!this.hudVisible);
         break;
-      case 'ArrowRight':
-        if (this.hudVisible) this.hudHighlight = (this.hudHighlight + 1) % this.hudContent().buttons.length;
-        else this.opts.hud?.next?.();
-        this.hudDirty = true;
-        break;
-      case 'ArrowLeft':
-        if (this.hudVisible) this.hudHighlight = (this.hudHighlight + this.hudContent().buttons.length - 1) % this.hudContent().buttons.length;
-        else this.opts.hud?.prev?.();
-        this.hudDirty = true;
-        break;
-      case 'Enter':
-        if (this.hudVisible) this.activate(this.hudHighlight);
-        else this.showHud(true);
-        break;
-      case ' ':
+      case 'playPause':
         this.opts.hud?.togglePlay?.();
         this.hudDirty = true;
         break;
-      case 'r':
-      case 'R':
+      case 'prev':
+        this.opts.hud?.prev?.();
+        this.hudDirty = true;
+        break;
+      case 'next':
+        this.opts.hud?.next?.();
+        this.hudDirty = true;
+        break;
+      case 'recenter':
         this.recenter();
         break;
-      default:
-        handled = false;
     }
-    if (handled) e.preventDefault();
+  }
+
+  private onKey = (e: KeyboardEvent) => {
+    const map: Record<string, PadAction> = {
+      ArrowLeft: 'left',
+      ArrowRight: 'right',
+      ArrowUp: 'up',
+      ArrowDown: 'down',
+      Enter: 'select',
+      ' ': 'playPause',
+      h: 'menu',
+      H: 'menu',
+      r: 'recenter',
+      R: 'recenter',
+      Backspace: 'back',
+    };
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.opts.onExit();
+      return;
+    }
+    const a = map[e.key];
+    if (!a) return;
+    e.preventDefault();
+    this.handleAction(a);
   };
 
   private noCtx = (e: Event) => e.preventDefault();
