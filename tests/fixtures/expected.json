@@ -1,0 +1,20 @@
+{
+  "duration": 6,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 2000,
+      "title": "Intro; the start = #1"
+    },
+    {
+      "start": 2000,
+      "end": 4500,
+      "title": "Canción del ñandú — parte dos"
+    },
+    {
+      "start": 4500,
+      "end": 6000,
+      "title": "Épilogue = fin; #3"
+    }
+  ]
+}

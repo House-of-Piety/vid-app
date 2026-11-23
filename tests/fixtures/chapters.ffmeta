@@ -1,0 +1,21 @@
+;FFMETADATA1
+title=Chapter Player fixture
+artist=Fixture
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=0
+END=2000
+title=Intro; the start = #1
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=2000
+END=4500
+title=Canción del ñandú — parte dos
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=4500
+END=6000
+title=Épilogue = fin; #3

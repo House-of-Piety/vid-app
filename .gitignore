@@ -1,0 +1,15 @@
+node_modules
+dist
+dev-dist
+*.local
+.vite
+coverage
+# Media never goes in the repo (test fixtures are the exception)
+*.m4b
+*.m4a
+*.mp4
+*.m4v
+*.mp3
+*.vtt
+!tests/fixtures/**
+.claude/settings.local.json
