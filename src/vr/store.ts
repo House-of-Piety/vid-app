@@ -1,7 +1,7 @@
 /** VR settings storage (own IndexedDB database, independent of the rest of the app). */
 import { builtinPresets, type DeviceParams } from './profile';
 import { DEFAULT_TUNE, type FineTune, type ScreenPreset } from './lens';
-import type { PhoneScreen } from './screens';
+import { PHONE_IPHONE_13_PRO, type PhoneScreen } from './screens';
 
 const DB = 'cardboard-vr';
 let dbp: Promise<IDBDatabase> | null = null;
@@ -65,13 +65,14 @@ export async function loadConfig(): Promise<VRConfig> {
   const presets: SavedProfile[] = builtinPresets().map((p) => ({ ...p, builtin: true }));
   let user: SavedProfile[] = [];
   let activeId = 'preset:v2';
-  let phone: PhoneScreen | null = null;
+  // Default phone until one is chosen: iPhone 13 Pro (User's phone; same screen as 12 / 12 Pro / 13 / 14).
+  let phone: PhoneScreen | null = PHONE_IPHONE_13_PRO;
   let tunes: Record<string, FineTune> = {};
   let scene = DEFAULT_SCENE;
   try {
     user = (await get<SavedProfile[]>('profiles')) ?? [];
     activeId = (await get<string>('activeId')) ?? activeId;
-    phone = (await get<PhoneScreen>('phone')) ?? null;
+    phone = (await get<PhoneScreen>('phone')) ?? phone;
     tunes = (await get<Record<string, FineTune>>('tunes')) ?? {};
     scene = { ...DEFAULT_SCENE, ...((await get<SceneSettings>('scene')) ?? {}) };
   } catch {
